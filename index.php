@@ -22,6 +22,7 @@ if (isset($_GET['debug'])) {
 //  Init funkcije
 // ---------------------------
 require_once __DIR__ . '/app/Core/Error.php';
+require_once __DIR__ . '/app/Core/Session.php';
 
 // ---------------------------
 //  View logic

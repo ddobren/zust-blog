@@ -7,7 +7,7 @@ class AuthController
 {
     public function login()
     {
-        session_start();
+        SessionManager::start(); // Osiguraj da je sesija startana
 
         // Ako forma nije submitana, redirektaj
         if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['loginBtn'])) {
@@ -20,7 +20,7 @@ class AuthController
 
         // Provjera praznih polja
         if (!$username || !$password) {
-            $_SESSION['login_error'] = 'Korisničko ime i lozinka su obavezni.';
+            ErrorHandlerSys::add('Korisničko ime i lozinka su obavezni.');
             header('Location: /cms/login');
             exit;
         }
@@ -29,7 +29,7 @@ class AuthController
         $user = User::findByUsername($username);
 
         if (!$user || !password_verify($password, $user['password'])) {
-            $_SESSION['login_error'] = 'Neispravni podaci za prijavu.';
+            ErrorHandlerSys::add('Neispravni podaci za prijavu.');
             header('Location: /cms/login');
             exit;
         }

@@ -1,3 +1,8 @@
+<?php
+SessionManager::start();
+$errors = ErrorHandlerSys::get();
+ErrorHandlerSys::clear();
+?>
 <!DOCTYPE html>
 <html lang="hr">
 
@@ -5,8 +10,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Admin prijava | Žene u svijetu tehnologije</title>
+    <link rel="stylesheet" href="../../public/css/globals.css" />
     <link rel="stylesheet" href="../../public/css/login.css" />
-    <link rel="stylesheet" href="../../public/css/index.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Open+Sans:wght@400;600&family=Lexend:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -23,20 +28,15 @@
 
                 <form class="login-form" action="/cms/login" method="post">
 
-                    <?php
-                    if (!empty($_SESSION['login_error'])):
-                    ?>
+                    <?php foreach ($errors as $error): ?>
                         <div class="login-error">
-                            <?= htmlspecialchars($_SESSION['login_error']) ?>
+                            <?= htmlspecialchars($error) ?>
                         </div>
-                    <?php
-                        unset($_SESSION['login_error']);
-                    endif;
-                    ?>
+                    <?php endforeach; ?>
 
                     <div class="form-group">
                         <label for="username">Korisničko ime</label>
-                        <input type="text" id="username" name="username" required>
+                        <input type="text" id="username" name="username" autocomplete="username" required>
                     </div>
 
                     <div class="form-group">

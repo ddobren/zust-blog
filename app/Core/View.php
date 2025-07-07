@@ -16,18 +16,23 @@ class View
         require $fullPath;
     }
 
- public static function renderTemplate(string $templatePath, string $componentPath, array $data = []): void
+    public static function renderTemplate(string $templatePath, string $componentPath, array $data = []): void
     {
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
 
-        $templateFullPath = __DIR__ . '/../views/' . $templatePath;
-        $componentFullPath = __DIR__ . '/../views/' . $componentPath;
+        $templateFullPath = realpath(BASE_PATH . '/app/Views/' . $templatePath);
+        $componentFullPath = realpath(BASE_PATH . '/app/Views/' . $componentPath);
+
+        if (!$templateFullPath || !$componentFullPath) {
+            echo "Greška: Nisu pronađeni template ili komponenta.";
+            return;
+        }
 
         ob_start();
         extract($data);
-        require $componentFullPath; 
+        require $componentFullPath;
         $componentHtml = ob_get_clean();
 
         ob_start();
@@ -41,30 +46,26 @@ class View
 
     public static function renderTemplateWithVars(string $templatePath, string $componentPath, array $vars = []): void
     {
-        // Pokreni sesiju na početku
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
 
-        $templateFullPath = __DIR__ . '/../views/' . $templatePath;
-        $componentFullPath = __DIR__ . '/../views/' . $componentPath;
+        $templateFullPath = realpath(BASE_PATH . '/app/Views/' . $templatePath);
+        $componentFullPath = realpath(BASE_PATH . '/app/Views/' . $componentPath);
 
-        if (!file_exists($templateFullPath) || !file_exists($componentFullPath)) {
+        if (!$templateFullPath || !$componentFullPath) {
             echo "Greška: Nisu pronađeni template ili komponenta.";
             return;
         }
 
         extract($vars);
 
-        // Snimi komponentu u buffer
         ob_start();
         require $componentFullPath;
         $component = ob_get_clean();
 
-        // Učitaj template
         $templateContent = file_get_contents($templateFullPath);
 
-        // Zamijeni {{content}} i odmah ispiši rezultat
         echo str_replace('{{content}}', $component, $templateContent);
     }
 }
