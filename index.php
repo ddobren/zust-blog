@@ -1,6 +1,11 @@
 <?php
 
 // ---------------------------
+//  Base Path
+// ---------------------------
+define('BASE_PATH', realpath(__DIR__));
+
+// ---------------------------
 //  Konfiguracije
 // ---------------------------
 require_once __DIR__ . '/config/Config.php';

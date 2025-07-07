@@ -4,39 +4,22 @@ class Auth
 {
     public static function login(int $userId): void
     {
-        if (session_status() !== PHP_SESSION_ACTIVE) {
-            session_start();
-        }
-
-        $_SESSION['user_id'] = $userId;
+        SessionManager::set('user_id', $userId);
     }
 
     public static function userId(): ?int
     {
-        if (session_status() !== PHP_SESSION_ACTIVE) {
-            session_start();
-        }
-
-        return $_SESSION['user_id'] ?? null;
+        return SessionManager::get('user_id');
     }
 
     public static function getUsername(): ?string
     {
-        if (session_status() !== PHP_SESSION_ACTIVE) {
-            session_start();
-        }
-
-        $userId = $_SESSION['user_id'] ?? null;
-
-        if (!$userId) {
-            return null;
-        }
+        $userId = self::userId();
+        if (!$userId) return null;
 
         $db = Conn::get();
-
         $stmt = $db->prepare("SELECT username FROM users WHERE id = :id LIMIT 1");
         $stmt->execute(['id' => $userId]);
-
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
         return $user['username'] ?? null;
@@ -44,21 +27,12 @@ class Auth
 
     public static function getRole(): ?string
     {
-        if (session_status() !== PHP_SESSION_ACTIVE) {
-            session_start();
-        }
-
-        $userId = $_SESSION['user_id'] ?? null;
-
-        if (!$userId) {
-            return null;
-        }
+        $userId = self::userId();
+        if (!$userId) return null;
 
         $db = Conn::get();
-
         $stmt = $db->prepare("SELECT role FROM users WHERE id = :id LIMIT 1");
         $stmt->execute(['id' => $userId]);
-
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
         return $user['role'] ?? null;
@@ -66,12 +40,7 @@ class Auth
 
     public static function logout(): void
     {
-        if (session_status() !== PHP_SESSION_ACTIVE) {
-            session_start();
-        }
-
-        session_destroy();
-
+        SessionManager::destroy();
         header('Location: /');
         exit;
     }

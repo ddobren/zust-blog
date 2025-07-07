@@ -4,10 +4,11 @@ class View
 {
     public static function load(string $viewPath, array $vars = []): void
     {
-        $fullPath = __DIR__ . '/../views/' . $viewPath;
+        $fullPath = realpath(BASE_PATH . '/app/Views/' . $viewPath);
 
-        if (!file_exists($fullPath)) {
+        if (!$fullPath || !file_exists($fullPath)) {
             echo "Greška: View fajl '$viewPath' ne postoji.";
+            echo "<br>";
             return;
         }
 
