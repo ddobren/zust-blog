@@ -6,8 +6,6 @@ class categoriesController extends ErrorHandlerSys
 {
     public function create()
     {
-        session_start();
-
         // Provjeri je li forma submitana
         if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['createCategoryBtn'])) {
             header("Location: /cms/dashboard");

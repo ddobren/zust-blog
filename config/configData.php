@@ -2,12 +2,13 @@
 
 return [
     "db" => [
-        "host" => "127.0.0.1",
-        "username" => "root",
-        "password" => "",
-        "database" => "dzw-inf",
+        "host" => "db",
+        "username" => "zust",
+        "password" => "zust123",
+        "database" => "zust",
         "port" => "3306",
     ],
+
     "app" => [
         "name" => "MyBlog",
         "env" => "development"

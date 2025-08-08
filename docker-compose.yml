@@ -1,0 +1,50 @@
+services:
+  app:
+    image: php:8.3-apache
+    ports:
+      - "8000:80"
+    volumes:
+      - ./:/var/www/html
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      bash -lc "
+      docker-php-ext-install pdo_mysql mysqli &&
+      a2enmod rewrite &&
+      sed -ri 's/AllowOverride\s+None/AllowOverride All/i' /etc/apache2/apache2.conf &&
+      apache2-foreground
+      "
+
+  db:
+    image: mysql:8.0
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: zust
+      MYSQL_USER: zust
+      MYSQL_PASSWORD: zust123
+    command: --default-authentication-plugin=caching_sha2_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-proot123"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    volumes:
+      - db_data:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin:5-apache
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: db
+      PMA_USER: zust
+      PMA_PASSWORD: zust123
+      UPLOAD_LIMIT: 256M
+    depends_on:
+      - db
+
+volumes:
+  db_data:
