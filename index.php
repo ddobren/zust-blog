@@ -34,7 +34,7 @@ require_once __DIR__ . '/app/Core/View.php';
 // ---------------------------
 require_once __DIR__ . '/app/Controllers/authController.php';
 require_once __DIR__ . '/app/Controllers/categoriesController.php';
-require_once __DIR__ . '/app/Controllers/uploadController.php';
+# require_once __DIR__ . '/app/Controllers/uploadController.php';
 require_once __DIR__ . '/app/Controllers/postsController.php';
 
 // ---------------------------

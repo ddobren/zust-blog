@@ -36,197 +36,133 @@
     </div>
 
     <div class="mb-3">
-        <label for="title" class="form-label">Opis</label>
+        <label for="desc" class="form-label">Opis</label>
         <input type="text" name="desc" class="form-control" id="desc" required>
     </div>
 
     <div class="mb-3">
         <label for="featured_image" class="form-label">Istaknuta slika (thumbnail)</label>
         <input type="file" name="featured_image" id="featured_image" class="form-control" accept="image/*">
+        <div class="mt-2">
+            <img id="featured_preview" alt="Preview" style="max-width:240px; display:none; border-radius:8px;">
+        </div>
     </div>
 
     <div class="mb-3">
-        <label for="content" class="form-label">Sadržaj</label>
+        <label for="editor" class="form-label">Sadržaj</label>
         <textarea name="content" id="editor" class="form-control" rows="10"></textarea>
     </div>
 
     <button type="submit" class="btn btn-primary" name="submitPostBtn">Objavi</button>
 </form>
 
-<!-- Uključujemo CKEditor 5 Classic build -->
+<!-- CKEditor 5 Classic build -->
 <script src="https://cdn.ckeditor.com/ckeditor5/41.0.0/classic/ckeditor.js"></script>
 <script>
-    let editorInstance;
-
-    // Funkcija za konvertiranje datoteke u Base64
-    function fileToBase64(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = error => reject(error);
-        });
-    }
-
-    // Dual upload adapter - Base64 za preview, server upload na submit
-    class PreviewUploadAdapter {
+    class Base64PreviewAdapter {
         constructor(loader) {
             this.loader = loader;
         }
-
         upload() {
-            return this.loader.file.then(file => {
-                return fileToBase64(file).then(base64 => {
-                    // Čuvamo originalnu datoteku za kasnije slanje na server
-                    return {
-                        default: base64,
-                        file: file // Čuvamo file za submit
-                    };
-                });
-            });
+            return this.loader.file.then(file => new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve({
+                    default: reader.result
+                }); // data:image/...
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            }));
         }
-
-        abort() {
-            // Cleanup if needed
-        }
+        abort() {}
     }
 
-    function PreviewUploadAdapterPlugin(editor) {
-        editor.plugins.get('FileRepository').createUploadAdapter = (loader) => {
-            return new PreviewUploadAdapter(loader);
+    function Base64PreviewPlugin(editor) {
+        editor.plugins.get('FileRepository').createUploadAdapter = (loader) => new Base64PreviewAdapter(loader);
+    }
+
+    let editor; // global ref
+    ClassicEditor.create(document.querySelector('#editor'), {
+        toolbar: {
+            items: ['heading', '|', 'bold', 'italic', 'link', '|', 'bulletedList', 'numberedList', 'blockQuote', '|', 'insertTable', 'uploadImage', 'mediaEmbed', '|', 'undo', 'redo']
+        },
+        table: {
+            contentToolbar: ['tableColumn', 'tableRow', 'mergeTableCells']
+        },
+        image: {
+            toolbar: ['imageStyle:inline', 'imageStyle:block', 'imageStyle:side', '|', 'toggleImageCaption', 'imageTextAlternative']
+        },
+        extraPlugins: [Base64PreviewPlugin]
+    }).then(ed => editor = ed).catch(console.error);
+
+    const input = document.getElementById('featured_image');
+    const preview = document.getElementById('featured_preview');
+    input.addEventListener('change', () => {
+        const file = input.files?.[0];
+        if (!file) {
+            preview.style.display = 'none';
+            preview.src = '';
+            return;
+        }
+        const r = new FileReader();
+        r.onload = e => {
+            preview.src = e.target.result;
+            preview.style.display = 'block';
         };
-    }
+        r.readAsDataURL(file);
+    });
 
-    ClassicEditor
-        .create(document.querySelector('#editor'), {
-            toolbar: {
-                items: [
-                    'heading',
-                    '|',
-                    'bold', 'italic', 'link',
-                    '|',
-                    'bulletedList', 'numberedList', 'blockQuote',
-                    '|',
-                    'insertTable',
-                    'uploadImage', // Jednostavniji upload dugme
-                    'mediaEmbed',
-                    '|',
-                    'undo', 'redo'
-                ]
-            },
-            extraPlugins: [PreviewUploadAdapterPlugin], // Preview adapter
-            heading: {
-                options: [{
-                        model: 'paragraph',
-                        title: 'Paragraf',
-                        class: 'ck-heading_paragraph'
-                    },
-                    {
-                        model: 'heading1',
-                        view: 'h1',
-                        title: 'Naslov 1',
-                        class: 'ck-heading_heading1'
-                    },
-                    {
-                        model: 'heading2',
-                        view: 'h2',
-                        title: 'Naslov 2',
-                        class: 'ck-heading_heading2'
-                    },
-                    {
-                        model: 'heading3',
-                        view: 'h3',
-                        title: 'Naslov 3',
-                        class: 'ck-heading_heading3'
-                    }
-                ]
-            },
-            table: {
-                contentToolbar: ['tableColumn', 'tableRow', 'mergeTableCells']
-            },
-            image: {
-                toolbar: [
-                    'imageStyle:inline',
-                    'imageStyle:block',
-                    'imageStyle:side',
-                    '|',
-                    'toggleImageCaption',
-                    'imageTextAlternative'
-                ],
-                // Onemogući file manager opciju
-                insert: {
-                    type: 'auto'
-                }
-            },
-            // Dodatno onemogući CKFinder
-            ckfinder: {
-                // Ne uključuj CKFinder
-                uploadUrl: null
-            }
-        })
-        .then(editor => {
-            editorInstance = editor;
-        })
-        .catch(error => {
-            console.error(error);
-        });
+    document.getElementById('postForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
 
-    // Funkcija za upload slika na server
-    async function uploadImageToServer(base64Data) {
-        // Konvertuj Base64 u File objekt
-        const response = await fetch(base64Data);
-        const blob = await response.blob();
+        const title = document.getElementById('title').value.trim();
+        const desc = document.getElementById('desc').value.trim();
+        const html = editor.getData();
 
-        const formData = new FormData();
-        formData.append('image', blob, 'image.jpg');
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const imgs = Array.from(doc.querySelectorAll('img'));
+        const form = new FormData();
 
-        const uploadResponse = await fetch('/cms/upload-image', {
-            method: 'POST',
-            body: formData
-        });
+        form.append('title', title);
+        form.append('desc', desc);
 
-        if (!uploadResponse.ok) {
-            throw new Error('Upload failed');
+        if (input.files && input.files[0]) {
+            form.append('featured_image', input.files[0]);
         }
 
-        const result = await uploadResponse.json();
-        return result.url;
-    }
+        let index = 0;
+        for (const img of imgs) {
+            const src = img.getAttribute('src') || '';
+            if (src.startsWith('data:image/')) {
+                const placeholder = `__IMG${index}__`;
+                img.setAttribute('src', placeholder);
 
-    // Prije submitanja, upload-aj slike i zamijeni Base64 sa URL-ovima
-    document.querySelector('#postForm').addEventListener('submit', async function(e) {
-        e.preventDefault(); // Prekini normalni submit
+                const blob = await fetch(src).then(r => r.blob());
+                const ext = (blob.type.split('/')[1] || 'png').replace('jpeg', 'jpg');
+                form.append('content_images[]', new File([blob], `content-${index}.${ext}`, {
+                    type: blob.type
+                }));
 
-        let content = editorInstance.getData();
-
-        // Pronađi sve Base64 slike u sadržaju
-        const base64Images = content.match(/src="data:image\/[^"]+"/g);
-
-        if (base64Images) {
-            try {
-                // Upload svaku sliku
-                for (let base64Img of base64Images) {
-                    const base64Data = base64Img.replace('src="', '').replace('"', '');
-                    const serverUrl = await uploadImageToServer(base64Data);
-
-                    // Zamijeni Base64 sa server URL-om
-                    content = content.replace(base64Data, serverUrl);
-                }
-
-                // Postavi finalni sadržaj
-                document.querySelector('#editor').value = content;
-
-                // Sada submitaj formu
-                this.submit();
-
-            } catch (error) {
-                console.error('Error uploading images:', error);
-                alert('Greška pri upload-u slika. Pokušajte ponovo.');
+                index++;
             }
-        } else {
-            // Nema slika, normalno submitaj
-            document.querySelector('#editor').value = content;
-            this.submit();
+        }
+
+        const processedHTML = doc.body.innerHTML;
+        form.append('content', processedHTML);
+
+        try {
+            const res = await fetch('/cms/posts/create', {
+                method: 'POST',
+                body: form
+            });
+            const ct = res.headers.get('content-type') || '';
+            const payload = ct.includes('application/json') ? await res.json() : {
+                raw: await res.text()
+            };
+            console.log('API response:', payload);
+            alert('Server response:\n' + (ct.includes('json') ? JSON.stringify(payload, null, 2) : payload.raw));
+        } catch (err) {
+            console.error(err);
+            alert('Greška pri slanju: ' + err.message);
         }
     });
 </script>

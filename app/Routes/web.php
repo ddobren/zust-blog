@@ -2,6 +2,56 @@
 
 use Routing\Route;
 
+// Static
+Route::get('/uploads/thumbnails/{file}', function ($file) {
+    $path = BASE_PATH . '/public/uploads/thumbnails/' . $file;
+
+    if (!file_exists($path)) {
+        http_response_code(404);
+        exit;
+    }
+
+    $mime = mime_content_type($path);
+    header('Content-Type: ' . $mime);
+    header('Content-Length: ' . filesize($path));
+
+    readfile($path);
+    exit;
+});
+
+Route::get('/uploads/posts/{file}', function ($file) {
+    $path = BASE_PATH . '/public/uploads/posts/' . $file;
+
+    if (!file_exists($path)) {
+        http_response_code(404);
+        exit;
+    }
+
+    $mime = mime_content_type($path);
+    header('Content-Type: ' . $mime);
+    header('Content-Length: ' . filesize($path));
+
+    readfile($path);
+    exit;
+});
+
+Route::get('/media/{file}', function ($file) {
+    $path = BASE_PATH . '/public/media/' . $file;
+
+    if (!file_exists($path)) {
+        http_response_code(404);
+        exit;
+    }
+
+    $mime = mime_content_type($path);
+    header('Content-Type: ' . $mime);
+    header('Content-Length: ' . filesize($path));
+
+    readfile($path);
+    exit;
+});
+// ================================
+
 
 Route::get('/', function () {
     View::load('/home.php');
@@ -68,18 +118,5 @@ Route::get('/cms/posts/create', function () {
 Route::post('/cms/posts/create', function () {
     Auth::redirectIfGuest();
 
-    $title = $_POST['title'] ?? '';
-    $content = $_POST['content'] ?? '';
-    $img = $_FILES['featured_image'] ?? 'nista';
-
-    foreach ($_POST as $i => $value) {
-        echo "<pre>";
-        print_r(htmlspecialchars($value));
-        echo "</pre>";
-    }
-});
-
-Route::post('/cms/upload/image', function () {
-    Auth::redirectIfGuest();
-    UploadController::uploadImage();
+    (new PostsController)->create();
 });

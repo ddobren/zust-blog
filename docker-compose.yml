@@ -5,14 +5,28 @@ services:
       - "8000:80"
     volumes:
       - ./:/var/www/html
+      # Ako si na SELinux hostu (npr. Fedora/CentOS), dodaj :z → ./:/var/www/html:z
     depends_on:
       db:
         condition: service_healthy
     command: >
       bash -lc "
+      apt-get update && apt-get install -y acl &&
       docker-php-ext-install pdo_mysql mysqli &&
       a2enmod rewrite &&
       sed -ri 's/AllowOverride\s+None/AllowOverride All/i' /etc/apache2/apache2.conf &&
+
+      # PHP upload/post limits
+      echo 'upload_max_filesize = 32M' > /usr/local/etc/php/conf.d/uploads.ini &&
+      echo 'post_max_size = 32M' >> /usr/local/etc/php/conf.d/uploads.ini &&
+
+      # Dozvole za cijeli public/ (DEV only!)
+      chown -R www-data:www-data /var/www/html/public &&
+      find /var/www/html/public -type d -exec chmod 2775 {} \; &&
+      find /var/www/html/public -type f -exec chmod 0664 {} \; &&
+      setfacl -R -m g:www-data:rwx /var/www/html/public &&
+      setfacl -R -d -m g:www-data:rwx /var/www/html/public &&
+
       apache2-foreground
       "
 
