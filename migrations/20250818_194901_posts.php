@@ -5,8 +5,7 @@ return function (PDO $db) {
     CREATE TABLE IF NOT EXISTS posts (
         id INT AUTO_INCREMENT PRIMARY KEY,
         title VARCHAR(255) NOT NULL,
-        slug VARCHAR(255) NOT NULL UNIQUE,
-        excerpt TEXT NOT NULL,
+        description TEXT NOT NULL,
         content LONGTEXT NOT NULL,
         thumbnail_path VARCHAR(255) DEFAULT NULL,
         status ENUM('draft', 'published') NOT NULL DEFAULT 'draft',

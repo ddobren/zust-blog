@@ -16,7 +16,7 @@ class PostsController
 
         foreach ([$thumbDir, $postDir] as $dir) {
             if (!is_dir($dir)) {
-                mkdir($dir, 0775, true); // or 0777
+                mkdir($dir, 0775, true);
             }
         }
 
@@ -28,7 +28,7 @@ class PostsController
             $name = time() . '-' . bin2hex(random_bytes(6)) . '.' . strtolower($ext);
             $path = $dir . '/' . $name;
             if (move_uploaded_file($file['tmp_name'], $path)) {
-                return $publicPath . '/' . $name; // vraća javni URL
+                return $publicPath . '/' . $name;
             }
             return null;
         };
@@ -72,13 +72,61 @@ class PostsController
             'content_html'  => $content_raw
         ];
 
-        // DB::table('posts')->insert($data);
+        // JSON response preuzima insertPost()
+        self::insertPost($data);
+    }
+
+    private static function insertPost(array $data)
+    {
+        $db = Conn::get();
+
+        $now = time();
+        $status = "published";
+        $author_id = Auth::userId();
 
         header('Content-Type: application/json');
-        echo json_encode([
-            'status'  => 'success',
-            'message' => 'Objava spremljena',
-            'data'    => $data
-        ]);
+
+        try {
+            $stmt = $db->prepare("
+                INSERT INTO posts (title, description, content, thumbnail_path, status, author_id, published_at, created_at, updated_at)
+                VALUES (:title, :description, :content, :thumbnail, :status, :author_id, :published_at, :created_at, :updated_at)
+            ");
+
+            $stmt->execute([
+                ':title'        => $data['title'],
+                ':description'  => $data['desc'],
+                ':content'      => $data['content_html'],
+                ':thumbnail'    => $data['featured_url'],
+                ':status'       => $status,
+                ':author_id'    => $author_id,
+                ':published_at' => $now,
+                ':created_at'   => $now,
+                ':updated_at'   => $now,
+            ]);
+
+            $insertId = $db->lastInsertId();
+
+            echo json_encode([
+                'status'  => 'success',
+                'message' => 'Objava spremljena',
+                'data'    => [
+                    'id'           => $insertId,
+                    'title'        => $data['title'],
+                    'desc'         => $data['desc'],
+                    'featured_url' => $data['featured_url'],
+                    'content_html' => $data['content_html'],
+                    'status'       => $status,
+                    'author_id'    => $author_id,
+                    'created_at'   => $now,
+                ]
+            ]);
+        } catch (PDOException $e) {
+            http_response_code(500);
+            echo json_encode([
+                'status'  => 'error',
+                'message' => 'Greška pri spremanju objave',
+                'error'   => $e->getMessage()
+            ]);
+        }
     }
 }
