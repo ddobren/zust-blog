@@ -6,6 +6,7 @@ class PostsController
     {
         $title       = trim($_POST['title'] ?? '');
         $desc        = trim($_POST['desc'] ?? '');
+        $category_id = isset($_POST['category_id']) ? (int)$_POST['category_id'] : 0;
         $content_raw = $_POST['content'] ?? '';
 
         $featured     = $_FILES['featured_image'] ?? null;
@@ -68,6 +69,7 @@ class PostsController
         $data = [
             'title'         => $title,
             'desc'          => $desc,
+            'category_id'   => $category_id,
             'featured_url'  => $featured_url,
             'content_html'  => $content_raw
         ];
@@ -88,13 +90,14 @@ class PostsController
 
         try {
             $stmt = $db->prepare("
-                INSERT INTO posts (title, description, content, thumbnail_path, status, author_id, published_at, created_at, updated_at)
-                VALUES (:title, :description, :content, :thumbnail, :status, :author_id, :published_at, :created_at, :updated_at)
+                INSERT INTO posts (title, description, category_id, content, thumbnail_path, status, author_id, published_at, created_at, updated_at)
+                VALUES (:title, :description, :category_id, :content, :thumbnail, :status, :author_id, :published_at, :created_at, :updated_at)
             ");
 
             $stmt->execute([
                 ':title'        => $data['title'],
                 ':description'  => $data['desc'],
+                ':category_id'  => $data['category_id'],
                 ':content'      => $data['content_html'],
                 ':thumbnail'    => $data['featured_url'],
                 ':status'       => $status,
@@ -113,6 +116,7 @@ class PostsController
                     'id'           => $insertId,
                     'title'        => $data['title'],
                     'desc'         => $data['desc'],
+                    'category_id'  => $data['category_id'],
                     'featured_url' => $data['featured_url'],
                     'content_html' => $data['content_html'],
                     'status'       => $status,
@@ -124,9 +128,21 @@ class PostsController
             http_response_code(500);
             echo json_encode([
                 'status'  => 'error',
-                'message' => 'Greška pri spremanju objave',
+                'message' => 'Greška prilikom spremanja objave',
                 'error'   => $e->getMessage()
             ]);
+        }
+    }
+
+    public function getCategories()
+    {
+        try {
+            $db = Conn::get();
+            $stmt = $db->query("SELECT * FROM categories ORDER BY created_at DESC");
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            ErrorHandlerSys::add("Greška prilikom dohvaćanja kategorija: " . $e->getMessage());
+            return [];
         }
     }
 }

@@ -192,6 +192,20 @@
                         </div>
                         <div class="invalid-feedback">Unesi opis.</div>
                     </div>
+
+                    <div class="col-12">
+                        <label for="category_id" class="form-label">Kategorija</label>
+                        <select name="category_id" id="category_id" class="form-select" required>
+                            <option value="" disabled selected>-- Odaberi kategoriju --</option>
+                            <?php
+                            $categories = (new PostsController)->getCategories();
+                            foreach ($categories as $category) {
+                                echo '<option value="' . $category['id'] . '">' . htmlspecialchars($category['name']) . '</option>';
+                            }
+                            ?>
+                        </select>
+                        <div class="invalid-feedback">Odaberi kategoriju.</div>
+                    </div>
                 </div>
 
                 <!-- Thumbnail -->
@@ -302,6 +316,7 @@
     /* Title/desc counters */
     const titleEl = document.getElementById('title');
     const descEl = document.getElementById('desc');
+    const categoryEl = document.getElementById('category_id');
     const titleCount = document.getElementById('titleCount');
     const descCount = document.getElementById('descCount');
     const updCounts = () => {
@@ -399,6 +414,7 @@
 
             form.append('title', titleEl.value.trim());
             form.append('desc', descEl.value.trim());
+            form.append('category_id', categoryEl.value);
 
             if (thumbInput.files && thumbInput.files[0]) {
                 form.append('featured_image', thumbInput.files[0]);
