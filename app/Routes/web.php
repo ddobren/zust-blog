@@ -128,3 +128,11 @@ Route::get('/cms/posts', function () {
     Auth::redirectIfGuest();
     View::renderTemplate('templates/cms.php', 'components/allPosts.php');
 });
+
+// Specific post
+Route::get('/post/{slug}', function ($slug) {
+    $data = [
+        'dataxyz' => $slug
+    ];
+    View::load('components/specificPost.php', $data);
+});

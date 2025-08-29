@@ -25,6 +25,11 @@ require_once __DIR__ . '/app/Core/Error.php';
 require_once __DIR__ . '/app/Core/Session.php';
 
 // ---------------------------
+//  Models
+// ---------------------------
+require_once __DIR__ . '/app/Models/public/getAllPostsModel.php';
+
+// ---------------------------
 //  View logic
 // ---------------------------
 require_once __DIR__ . '/app/Core/View.php';
