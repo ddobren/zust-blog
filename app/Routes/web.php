@@ -120,3 +120,11 @@ Route::post('/cms/posts/create', function () {
 
     (new PostsController)->create();
 });
+
+// ...
+
+// All posts    
+Route::get('/cms/posts', function () {
+    Auth::redirectIfGuest();
+    View::renderTemplate('templates/cms.php', 'components/allPosts.php');
+});

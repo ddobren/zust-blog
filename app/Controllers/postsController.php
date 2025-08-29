@@ -70,6 +70,7 @@ class PostsController
             'title'         => $title,
             'desc'          => $desc,
             'category_id'   => $category_id,
+            'slug'          => self::generateSEOslug($title),
             'featured_url'  => $featured_url,
             'content_html'  => $content_raw
         ];
@@ -90,14 +91,15 @@ class PostsController
 
         try {
             $stmt = $db->prepare("
-                INSERT INTO posts (title, description, category_id, content, thumbnail_path, status, author_id, published_at, created_at, updated_at)
-                VALUES (:title, :description, :category_id, :content, :thumbnail, :status, :author_id, :published_at, :created_at, :updated_at)
+                INSERT INTO posts (title, description, category_id, slug, content, thumbnail_path, status, author_id, published_at, created_at, updated_at)
+                VALUES (:title, :description, :category_id, :slug, :content, :thumbnail, :status, :author_id, :published_at, :created_at, :updated_at)
             ");
 
             $stmt->execute([
                 ':title'        => $data['title'],
                 ':description'  => $data['desc'],
                 ':category_id'  => $data['category_id'],
+                ':slug'         => $data['slug'],
                 ':content'      => $data['content_html'],
                 ':thumbnail'    => $data['featured_url'],
                 ':status'       => $status,
@@ -117,6 +119,7 @@ class PostsController
                     'title'        => $data['title'],
                     'desc'         => $data['desc'],
                     'category_id'  => $data['category_id'],
+                    'slug'         => $data['slug'],
                     'featured_url' => $data['featured_url'],
                     'content_html' => $data['content_html'],
                     'status'       => $status,
@@ -144,5 +147,62 @@ class PostsController
             ErrorHandlerSys::add("Greška prilikom dohvaćanja kategorija: " . $e->getMessage());
             return [];
         }
+    }
+
+    public function getPosts()
+    {
+        header('Content-Type: application/json');
+
+        try {
+            $db = Conn::get();
+
+            $sql = "
+            SELECT
+                p.id,
+                p.title,
+                p.description,
+                p.category_id,
+                p.slug,
+                c.name        AS category_name,
+                p.content,
+                p.thumbnail_path,
+                p.status,
+                p.author_id,
+                u.username    AS author_username,
+                p.published_at,
+                p.created_at,
+                p.updated_at
+            FROM posts p
+            LEFT JOIN users u       ON u.id = p.author_id
+            LEFT JOIN categories c  ON c.id = p.category_id
+            ORDER BY p.created_at DESC
+        ";
+
+            $stmt  = $db->query($sql);
+            $posts = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            echo json_encode([
+                'status' => 'success',
+                'data'   => $posts
+            ]);
+        } catch (PDOException $e) {
+            http_response_code(500);
+            echo json_encode([
+                'status'  => 'error',
+                'message' => 'Greška prilikom dohvaćanja objava',
+                'error'   => $e->getMessage()
+            ]);
+        }
+    }
+
+
+    private static function generateSEOslug(string $text)
+    {
+        $text = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $text);
+        $text = strtolower($text);
+        $text = preg_replace('~[^a-z0-9]+~', '-', $text);
+        $text = trim($text, '-');
+
+        return $text ?: 'post';
     }
 }

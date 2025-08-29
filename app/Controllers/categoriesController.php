@@ -86,4 +86,17 @@ class categoriesController extends ErrorHandlerSys
         header('Location: /cms/categories#categories');
         exit;
     }
+
+    public static function getNumPostsById(int $id): int
+    {
+        try {
+            $db = Conn::get();
+            $stmt = $db->prepare("SELECT COUNT(*) FROM posts WHERE category_id = :id");
+            $stmt->execute(['id' => $id]);
+            return $stmt->fetchColumn();
+        } catch (PDOException $e) {
+            ErrorHandlerSys::add("Greška prilikom dohvaćanja broja postova: " . $e->getMessage());
+            return 0;
+        }
+    }
 }

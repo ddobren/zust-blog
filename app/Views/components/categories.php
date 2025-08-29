@@ -55,7 +55,7 @@
                              <tr>
                                  <td><?= $index + 1 ?></td>
                                  <td><?= htmlspecialchars($cat['name']) ?></td>
-                                 <td>0</td>
+                                 <td><?= categoriesController::getNumPostsById($cat['id']) ?></td>
                                  <td><?= date('d.m.Y.', $cat['created_at']) ?></td>
                                  <td>
                                      <div class="d-flex">

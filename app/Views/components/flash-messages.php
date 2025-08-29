@@ -1,5 +1,3 @@
-<!-- Ovdje ide postojeći HTML kod -->
-
 <?php if (!empty(ErrorHandlerSys::get())): ?>
     <div class="alert alert-danger">
         <?php foreach (ErrorHandlerSys::get() as $error): ?>
@@ -16,7 +14,6 @@
     </div>
 <?php endif; ?>
 
-<?php 
-// Pomaknite clear na kraj, nakon što su poruke prikazane
-ErrorHandlerSys::clear(); 
+<?php
+ErrorHandlerSys::clear();
 ?>
